@@ -14,11 +14,11 @@ use self::Greed::*;
 use self::BuildAst::*;
 
 use std::char;
+use std::collections::HashMap;
 use std::cmp;
 use std::fmt;
 use std::iter;
 use std::num;
-use std::slice::BinarySearchResult;
 
 /// Static data containing Unicode ranges for general categories and scripts.
 use unicode::regex::{UNICODE_CLASSES, PERLD, PERLS, PERLW};
@@ -1030,9 +1030,17 @@ fn is_valid_cap(c: char) -> bool {
 }
 
 fn find_class(classes: NamedClasses, name: &str) -> Option<Vec<(char, char)>> {
-    match classes.binary_search(|&(s, _)| s.cmp(name)) {
-        BinarySearchResult::Found(i) => Some(classes[i].1.to_vec()),
-        BinarySearchResult::NotFound(_) => None,
+
+    let mut hm : HashMap<&'static str, &'static Class> = HashMap::new();
+    for el in ASCII_CLASSES.iter() {
+        let ptr = *el;
+        let k : &'static str = ptr.0;
+        let v : &'static Class = ptr.1;
+        hm.insert(k, v);
+    }
+    match hm.get(name) {
+        Some(i) => Some(i.to_vec()),
+        None => None
     }
 }
 

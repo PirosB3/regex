@@ -227,8 +227,17 @@ impl<'r, 't> Nfa<'r, 't> {
                     let negate = flags & FLAG_NEGATED > 0;
                     let casei = flags & FLAG_NOCASE > 0;
                     let found = ranges.as_slice();
-                    let found = found.binary_search(|&rc| class_cmp(casei, c, rc))
-                        .found().is_some();
+                    let found : bool = {
+                        let mut res = false;
+                        for rc in found.iter() {
+                            if class_cmp(casei, c, *rc) == Equal {
+                                res = true;
+                            }
+                        }
+                        res
+                    };
+                    //found.binary_search(|&rc| class_cmp(casei, c, rc))
+                        //.found().is_some();
                     if found ^ negate {
                         self.add(nlist, pc+1, caps);
                     }
@@ -518,15 +527,28 @@ pub fn is_word(c: Option<char>) -> bool {
     // Try the common ASCII case before invoking binary search.
     match c {
         '_' | '0' ... '9' | 'a' ... 'z' | 'A' ... 'Z' => true,
-        _ => PERLW.binary_search(|&(start, end)| {
-            if c >= start && c <= end {
-                Equal
-            } else if start > c {
-                Greater
-            } else {
-                Less
-            }
-        }).found().is_some()
+        _ => {
+            let result = {
+                let mut res = false;
+                for tpl in PERLW.iter() {
+                    if c >= tpl.0 && c <= tpl.1 {
+                        res = true;
+                    }
+                }
+                res
+            };
+            result
+        }
+        
+        //_ => PERLW.binary_search(|&(start, end)| {
+            //if c >= start && c <= end {
+                //Equal
+            //} else if start > c {
+                //Greater
+            //} else {
+                //Less
+            //}
+        //}).found().is_some()
     }
 }
 
